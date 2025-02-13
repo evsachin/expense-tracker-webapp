@@ -1,22 +1,30 @@
 import { useState } from "react";
 
+const categories = ["Salary", "Food", "Rent", "Shopping", "Bills", "Others"];
+
 const TransactionModal = ({ isOpen, onClose, onSubmit, type }) => {
   const [amount, setAmount] = useState("");
   const [person, setPerson] = useState("");
+  const [category, setCategory] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]); // Default to today
 
   const handleSubmit = () => {
     if (!amount) return alert("Amount is required");
+    if (!category) return alert("Category is required");
 
     const transaction = {
       amount: parseFloat(amount),
-      person: type === "debit" ? person : "",
+      person,
+      category,
       type,
-      date: new Date().toLocaleDateString(),
+      date,
     };
 
     onSubmit(transaction);
     setAmount("");
     setPerson("");
+    setCategory("");
+    setDate(new Date().toISOString().split("T")[0]); // Reset to today
     onClose();
   };
 
@@ -33,15 +41,32 @@ const TransactionModal = ({ isOpen, onClose, onSubmit, type }) => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
-        {type === "debit" && (
-          <input
-            type="text"
-            placeholder="Person's Name"
-            className="w-full p-2 border rounded mb-2"
-            value={person}
-            onChange={(e) => setPerson(e.target.value)}
-          />
-        )}
+        <input
+          type="text"
+          placeholder={type === "credit" ? "From whom?" : "To whom?"}
+          className="w-full p-2 border rounded mb-2"
+          value={person}
+          onChange={(e) => setPerson(e.target.value)}
+        />
+        <select
+          className="w-full p-2 border rounded mb-2"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">Select Category</option>
+          {categories.map((cat, index) => (
+            <option key={index} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        {/* Date Input */}
+        <input
+          type="date"
+          className="w-full p-2 border rounded mb-2"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
         <div className="flex justify-end">
           <button className="mr-2 bg-gray-300 p-2 rounded" onClick={onClose}>
             Cancel
