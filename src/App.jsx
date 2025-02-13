@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import TransactionModal from "./components/TransactionModal";
-
+ 
 export default function App() {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
