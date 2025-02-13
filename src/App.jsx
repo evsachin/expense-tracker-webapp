@@ -1,59 +1,55 @@
 import { useState, useEffect } from "react";
 import TransactionModal from "./components/TransactionModal";
 import { saveAsCSV } from "./utils/exportCSV";
-import EditBalanceModal from "./components/EditBalanceModal"; // ✅ Import new modal
-import InitialBalanceModal from "./components/InitailBalancemodal";
+import InitialBalanceModal from "./components/InitialBalanceModal";
 
 export default function App() {
   const [balance, setBalance] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isInitialModalOpen, setIsInitialModalOpen] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // ✅ New state for edit modal
+  const [isInitialModalOpen, setIsInitialModalOpen] = useState(false);
   const [transactionType, setTransactionType] = useState("credit");
   const [filterType, setFilterType] = useState("all");
   const [filterDate, setFilterDate] = useState("");
 
+  // ✅ Load transactions & balance from localStorage properly
   useEffect(() => {
     const storedBalance = localStorage.getItem("balance");
     const storedTransactions = localStorage.getItem("transactions");
 
-    if (storedBalance !== null) {
-      setBalance(JSON.parse(storedBalance));
-    }
+    if (storedBalance !== null) setBalance(JSON.parse(storedBalance));
 
-    if (storedTransactions) {
-      setTransactions(JSON.parse(storedTransactions));
-    }
+    // ⚠️ Ensure transactions are parsed as an array, not null
+    setTransactions(storedTransactions ? JSON.parse(storedTransactions) : []);
+
+    if (!storedBalance) setIsInitialModalOpen(true);
   }, []);
 
+  // ✅ Save transactions & balance to localStorage when they change
   useEffect(() => {
-    if (balance !== null) {
+    if (balance !== null)
       localStorage.setItem("balance", JSON.stringify(balance));
-    }
     localStorage.setItem("transactions", JSON.stringify(transactions));
   }, [balance, transactions]);
 
   const handleTransaction = (transaction) => {
     const newTransaction = {
       ...transaction,
-      date: new Date().toISOString().split("T")[0], // Automatically add today's date
+      date: new Date().toISOString().split("T")[0], // Auto-add today's date
     };
 
     const updatedTransactions = [...transactions, newTransaction];
 
-    // Update balance
+    // ✅ Save transactions to localStorage
+    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
+
     const updatedBalance =
       transaction.type === "credit"
         ? balance + parseFloat(transaction.amount)
         : balance - parseFloat(transaction.amount);
 
-    // Save to state & local storage
     setTransactions(updatedTransactions);
     setBalance(updatedBalance);
-
-    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
-    localStorage.setItem("balance", JSON.stringify(updatedBalance));
   };
 
   const handleSetInitialBalance = (amount) => {
@@ -62,9 +58,9 @@ export default function App() {
     localStorage.setItem("balance", JSON.stringify(amount));
   };
 
-  const handleEditBalance = (newBalance) => {
-    setBalance(newBalance);
-    localStorage.setItem("balance", JSON.stringify(newBalance));
+  const handleEditBalance = (newAmount) => {
+    setBalance(newAmount);
+    localStorage.setItem("balance", JSON.stringify(newAmount));
   };
 
   const filteredTransactions = transactions.filter((txn) => {
@@ -79,17 +75,20 @@ export default function App() {
         Expense Tracker
       </header>
 
-      {isInitialModalOpen ? (
+      {/* Open modal only if balance is not set */}
+      {isInitialModalOpen && (
         <InitialBalanceModal onSetBalance={handleSetInitialBalance} />
-      ) : (
+      )}
+
+      {balance !== null && (
         <>
-          <div className="bg-white p-4 rounded shadow-md text-lg font-semibold flex justify-between">
+          <div className="bg-white p-4 rounded shadow-md text-lg font-semibold flex justify-between items-center">
             <span>Balance: ₹{balance}</span>
             <button
-              className="bg-yellow-500 text-white px-3 py-1 rounded text-sm"
-              onClick={() => setIsEditModalOpen(true)}
+              className="bg-yellow-500 text-white p-2 rounded"
+              onClick={() => setIsInitialModalOpen(true)}
             >
-              Edit
+              Edit Balance
             </button>
           </div>
 
@@ -120,32 +119,29 @@ export default function App() {
             type={transactionType}
           />
 
-          <EditBalanceModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onUpdateBalance={handleEditBalance}
-            currentBalance={balance}
-          />
-
           <div className="mt-4">
-            {filteredTransactions.map((txn, index) => (
-              <div key={index} className="flex justify-between p-2 border-b">
-                <span>
-                  {txn.date} -{" "}
-                  {txn.type === "credit"
-                    ? `From: ${txn.person || "Unknown"}`
-                    : `To: ${txn.person}`}{" "}
-                  ({txn.category})
-                </span>
-                <span
-                  className={
-                    txn.type === "credit" ? "text-green-600" : "text-red-600"
-                  }
-                >
-                  {txn.type === "credit" ? "+" : "-"}₹{txn.amount}
-                </span>
-              </div>
-            ))}
+            {filteredTransactions.length > 0 ? (
+              filteredTransactions.map((txn, index) => (
+                <div key={index} className="flex justify-between p-2 border-b">
+                  <span>
+                    {txn.date} -{" "}
+                    {txn.type === "credit"
+                      ? `From: ${txn.person || "Unknown"}`
+                      : `To: ${txn.person}`}{" "}
+                    ({txn.category})
+                  </span>
+                  <span
+                    className={
+                      txn.type === "credit" ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {txn.type === "credit" ? "+" : "-"}₹{txn.amount}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-500">No transactions found</p>
+            )}
           </div>
 
           {/* Export CSV Button */}
