@@ -8,11 +8,19 @@ export default function EditBalanceModal({
 }) {
   const [newBalance, setNewBalance] = useState(currentBalance);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpdateBalance(parseFloat(newBalance));
-    onClose();
-  };
+ const handleSubmit = (e) => {
+   e.preventDefault();
+   const parsedBalance = parseFloat(newBalance);
+
+   if (isNaN(parsedBalance) || newBalance === "") {
+     alert("Please enter a valid balance.");
+     return;
+   }
+
+   onUpdateBalance(parsedBalance);
+   onClose();
+ };
+
 
   if (!isOpen) return null;
 

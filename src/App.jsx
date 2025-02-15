@@ -1,48 +1,39 @@
 import { useState, useEffect } from "react";
 import TransactionModal from "./components/TransactionModal";
 import { saveAsCSV } from "./utils/exportCSV";
-import InitialBalanceModal from "./components/InitialBalanceModal";
+import EditBalanceModal from "./components/EditBalanceModal";
+import EditTransactionModal from "./components/EditTransactionModal";
 
 export default function App() {
-  const [balance, setBalance] = useState(null);
+  const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isInitialModalOpen, setIsInitialModalOpen] = useState(false);
+  const [isEditBalanceModalOpen, setIsEditBalanceModalOpen] = useState(false);
   const [transactionType, setTransactionType] = useState("credit");
   const [filterType, setFilterType] = useState("all");
   const [filterDate, setFilterDate] = useState("");
+  const [editTransaction, setEditTransaction] = useState(null);
 
-  // ✅ Load transactions & balance from localStorage properly
   useEffect(() => {
     const storedBalance = localStorage.getItem("balance");
     const storedTransactions = localStorage.getItem("transactions");
 
-    if (storedBalance !== null) setBalance(JSON.parse(storedBalance));
-
-    // ⚠️ Ensure transactions are parsed as an array, not null
+    setBalance(storedBalance !== null ? JSON.parse(storedBalance) : 0);
     setTransactions(storedTransactions ? JSON.parse(storedTransactions) : []);
-
-    if (!storedBalance) setIsInitialModalOpen(true);
   }, []);
 
-  // ✅ Save transactions & balance to localStorage when they change
   useEffect(() => {
-    if (balance !== null)
-      localStorage.setItem("balance", JSON.stringify(balance));
+    localStorage.setItem("balance", JSON.stringify(balance));
     localStorage.setItem("transactions", JSON.stringify(transactions));
   }, [balance, transactions]);
 
   const handleTransaction = (transaction) => {
     const newTransaction = {
       ...transaction,
-      date: new Date().toISOString().split("T")[0], // Auto-add today's date
+      date: new Date().toISOString().split("T")[0],
     };
-
     const updatedTransactions = [...transactions, newTransaction];
-
-    // ✅ Save transactions to localStorage
     localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
-
     const updatedBalance =
       transaction.type === "credit"
         ? balance + parseFloat(transaction.amount)
@@ -52,15 +43,21 @@ export default function App() {
     setBalance(updatedBalance);
   };
 
-  const handleSetInitialBalance = (amount) => {
-    setBalance(amount);
-    setIsInitialModalOpen(false);
-    localStorage.setItem("balance", JSON.stringify(amount));
+  const handleEditTransaction = (updatedTransaction) => {
+    const updatedTransactions = transactions.map((txn) =>
+      txn.date === editTransaction.date && txn.amount === editTransaction.amount
+        ? updatedTransaction
+        : txn
+    );
+    setTransactions(updatedTransactions);
+    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
+    setEditTransaction(null);
   };
 
-  const handleEditBalance = (newAmount) => {
-    setBalance(newAmount);
-    localStorage.setItem("balance", JSON.stringify(newAmount));
+  const handleUpdateBalance = (amount) => {
+    setBalance(amount);
+    setIsEditBalanceModalOpen(false);
+    localStorage.setItem("balance", JSON.stringify(amount));
   };
 
   const filteredTransactions = transactions.filter((txn) => {
@@ -74,105 +71,108 @@ export default function App() {
       <header className="text-xl font-bold text-center mb-4">
         Expense Tracker
       </header>
+      <div className="bg-white p-4 rounded shadow-md text-lg font-semibold flex justify-between items-center">
+        <span>Balance: ₹{balance}</span>
+        <button
+          className="bg-yellow-500 text-white p-2 rounded"
+          onClick={() => setIsEditBalanceModalOpen(true)}
+        >
+          Reset Balance
+        </button>
+      </div>
 
-      {/* Open modal only if balance is not set */}
-      {isInitialModalOpen && (
-        <InitialBalanceModal onSetBalance={handleSetInitialBalance} />
-      )}
+      <div className="mt-4 flex gap-2">
+        <select
+          className="p-2 border rounded w-1/2"
+          onChange={(e) => setFilterType(e.target.value)}
+          value={filterType}
+        >
+          <option value="all">All Transactions</option>
+          <option value="credit">Credits</option>
+          <option value="debit">Debits</option>
+        </select>
+        <input
+          type="date"
+          className="p-2 border rounded w-1/2"
+          onChange={(e) => setFilterDate(e.target.value)}
+          value={filterDate}
+        />
+      </div>
 
-      {balance !== null && (
-        <>
-          <div className="bg-white p-4 rounded shadow-md text-lg font-semibold flex justify-between items-center">
-            <span>Balance: ₹{balance}</span>
-            <button
-              className="bg-yellow-500 text-white p-2 rounded"
-              onClick={() => setIsInitialModalOpen(true)}
+      <TransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleTransaction}
+        type={transactionType}
+      />
+      <EditBalanceModal
+        isOpen={isEditBalanceModalOpen}
+        onClose={() => setIsEditBalanceModalOpen(false)}
+        onUpdateBalance={handleUpdateBalance}
+        currentBalance={balance}
+      />
+      <EditTransactionModal
+        transaction={editTransaction}
+        onClose={() => setEditTransaction(null)}
+        onSubmit={handleEditTransaction}
+      />
+
+      <div className="mt-4">
+        {filteredTransactions.length > 0 ? (
+          filteredTransactions.map((txn, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-3 gap-4 p-2 border-b items-center"
             >
-              Edit Balance
-            </button>
-          </div>
+              <span>
+                {txn.date} - {txn.person || "Unknown"} ({txn.description})
+              </span>
+              <span
+                className={`text-right ${
+                  txn.type === "credit" ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {txn.type === "credit" ? "+" : "-"}₹{txn.amount}
+              </span>
+              <button
+                className="text-blue-500 text-right"
+                onClick={() => setEditTransaction(txn)}
+              >
+                Edit
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-gray-500">No transactions found</p>
+        )}
+      </div>
 
-          {/* Filter Section */}
-          <div className="mt-4 flex gap-2">
-            <select
-              className="p-2 border rounded w-1/2"
-              onChange={(e) => setFilterType(e.target.value)}
-              value={filterType}
-            >
-              <option value="all">All Transactions</option>
-              <option value="credit">Credits</option>
-              <option value="debit">Debits</option>
-            </select>
+      <button
+        className="mt-4 w-full bg-blue-500 text-white p-2 rounded"
+        onClick={() => saveAsCSV(transactions, balance)}
+      >
+        Export Transactions (CSV)
+      </button>
 
-            <input
-              type="date"
-              className="p-2 border rounded w-1/2"
-              onChange={(e) => setFilterDate(e.target.value)}
-              value={filterDate}
-            />
-          </div>
+      <button
+        className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg"
+        onClick={() => {
+          setTransactionType("credit");
+          setIsModalOpen(true);
+        }}
+      >
+        + Credit
+      </button>
 
-          <TransactionModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSubmit={handleTransaction}
-            type={transactionType}
-          />
-
-          <div className="mt-4">
-            {filteredTransactions.length > 0 ? (
-              filteredTransactions.map((txn, index) => (
-                <div key={index} className="flex justify-between p-2 border-b">
-                  <span>
-                    {txn.date} -{" "}
-                    {txn.type === "credit"
-                      ? `From: ${txn.person || "Unknown"}`
-                      : `To: ${txn.person}`}{" "}
-                    ({txn.category})
-                  </span>
-                  <span
-                    className={
-                      txn.type === "credit" ? "text-green-600" : "text-red-600"
-                    }
-                  >
-                    {txn.type === "credit" ? "+" : "-"}₹{txn.amount}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-gray-500">No transactions found</p>
-            )}
-          </div>
-
-          {/* Export CSV Button */}
-          <button
-            className="mt-4 w-full bg-blue-500 text-white p-2 rounded"
-            onClick={() => saveAsCSV(transactions)}
-          >
-            Export Transactions (CSV)
-          </button>
-
-          <button
-            className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg"
-            onClick={() => {
-              setTransactionType("credit");
-              setIsModalOpen(true);
-            }}
-          >
-            + Credit
-          </button>
-
-          <button
-            className="fixed bottom-6 left-6 bg-red-500 text-white p-4 rounded-full shadow-lg"
-            onClick={() => {
-              setTransactionType("debit");
-              setIsModalOpen(true);
-            }}
-          >
-            - Debit
-          </button>
-        </>
-      )}
+      <button
+        className="fixed bottom-6 left-6 bg-red-500 text-white p-4 rounded-full shadow-lg"
+        onClick={() => {
+          setTransactionType("debit");
+          setIsModalOpen(true);
+        }}
+      >
+        - Debit
+      </button>
     </div>
   );
 }
