@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+
 import TransactionModal from "./components/TransactionModal";
 import { saveAsCSV } from "./utils/exportCSV";
 import EditBalanceModal from "./components/EditBalanceModal";
@@ -52,6 +54,21 @@ export default function App() {
     setTransactions(updatedTransactions);
     localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
     setEditTransaction(null);
+  };
+
+  const handleDeleteTransaction = (txnToDelete) => {
+    const updatedTransactions = transactions.filter(
+      (txn) => txn !== txnToDelete
+    );
+    const updatedBalance =
+      txnToDelete.type === "credit"
+        ? balance - parseFloat(txnToDelete.amount)
+        : balance + parseFloat(txnToDelete.amount);
+
+    setTransactions(updatedTransactions);
+    setBalance(updatedBalance);
+    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
+    localStorage.setItem("balance", JSON.stringify(updatedBalance));
   };
 
   const handleUpdateBalance = (amount) => {
@@ -122,7 +139,7 @@ export default function App() {
           filteredTransactions.map((txn, index) => (
             <div
               key={index}
-              className="grid grid-cols-3 gap-4 p-2 border-b items-center"
+              className="grid grid-cols-4 gap-4 p-2 border-b items-center"
             >
               <span>
                 {txn.date} - {txn.person || "Unknown"} ({txn.description})
@@ -134,12 +151,14 @@ export default function App() {
               >
                 {txn.type === "credit" ? "+" : "-"}₹{txn.amount}
               </span>
-              <button
-                className="text-blue-500 text-right"
+              <PencilIcon
+                className="h-5 w-5 text-blue-500 cursor-pointer"
                 onClick={() => setEditTransaction(txn)}
-              >
-                Edit
-              </button>
+              />
+              <TrashIcon
+                className="h-5 w-5 text-red-500 cursor-pointer"
+                onClick={() => handleDeleteTransaction(txn)}
+              />
             </div>
           ))
         ) : (
@@ -155,16 +174,6 @@ export default function App() {
       </button>
 
       <button
-        className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg"
-        onClick={() => {
-          setTransactionType("credit");
-          setIsModalOpen(true);
-        }}
-      >
-        + Credit
-      </button>
-
-      <button
         className="fixed bottom-6 left-6 bg-red-500 text-white p-4 rounded-full shadow-lg"
         onClick={() => {
           setTransactionType("debit");
@@ -172,6 +181,16 @@ export default function App() {
         }}
       >
         - Debit
+      </button>
+
+      <button
+        className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg"
+        onClick={() => {
+          setTransactionType("credit");
+          setIsModalOpen(true);
+        }}
+      >
+        + Credit
       </button>
     </div>
   );
