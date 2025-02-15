@@ -139,26 +139,34 @@ export default function App() {
           filteredTransactions.map((txn, index) => (
             <div
               key={index}
-              className="grid grid-cols-4 gap-4 p-2 border-b items-center"
+              className="grid grid-cols-6 gap-4 p-2 border-b items-center"
             >
-              <span>
-                {txn.date} - {txn.person || "Unknown"} ({txn.description})
-              </span>
+              <div className="col-span-3">
+                <div className="flex space-x-1.5">
+                  <span className="font-semibold">
+                    {txn.person || "Unknown"}
+                  </span>
+                  <p className="text-gray-500 text-sm">({txn.description})</p>
+                </div>
+                <p className="text-xs text-gray-400">{txn.date}</p>
+              </div>
               <span
-                className={`text-right ${
+                className={`col-span-2 text-right ${
                   txn.type === "credit" ? "text-green-600" : "text-red-600"
                 }`}
               >
                 {txn.type === "credit" ? "+" : "-"}₹{txn.amount}
               </span>
-              <PencilIcon
-                className="h-5 w-5 text-blue-500 cursor-pointer"
-                onClick={() => setEditTransaction(txn)}
-              />
-              <TrashIcon
-                className="h-5 w-5 text-red-500 cursor-pointer"
-                onClick={() => handleDeleteTransaction(txn)}
-              />
+              <div className="flex gap-2">
+                <PencilIcon
+                  className="h-5 w-5 text-blue-500 cursor-pointer"
+                  onClick={() => setEditTransaction(txn)}
+                />
+                <TrashIcon
+                  className="h-5 w-5 text-red-500 cursor-pointer"
+                  onClick={() => handleDeleteTransaction(txn)}
+                />
+              </div>
             </div>
           ))
         ) : (
