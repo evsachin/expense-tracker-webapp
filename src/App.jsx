@@ -95,7 +95,7 @@ export default function App() {
     .reverse(); // Reverse the array to show the last transaction first
 
   return (
-    <div className="p-1 min-h-screen bg-gray-100">
+    <div className="p-3 min-h-screen bg-gray-100">
       <header className="text-xl font-bold text-center mb-4">
         Expense Tracker
       </header>
