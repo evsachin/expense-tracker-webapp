@@ -101,8 +101,8 @@ export default function App() {
       </header>
 
       {/* Display total credit, debit, and balance in a grid layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow-md border border-green-100">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-6">
+        <div className="bg-white p-2 rounded-lg shadow-md border border-green-100">
           <h3 className="text-sm font-semibold text-gray-500">Total Credit</h3>
           <p className="text-2xl font-bold text-green-600">
             ₹{totalCredit.toFixed(2)}
