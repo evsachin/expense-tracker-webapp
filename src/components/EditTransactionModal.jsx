@@ -8,20 +8,28 @@ export default function EditTransactionModal({
   const [amount, setAmount] = useState("");
   const [person, setPerson] = useState("");
   const [category, setCategory] = useState("");
+  const [date, setDate] = useState("");
 
   useEffect(() => {
     if (transaction) {
       setAmount(transaction.amount);
       setPerson(transaction.person);
-      setCategory(transaction.category);
+      setCategory(transaction.category || ""); // Initialize category (fallback to empty string if undefined)
+      setDate(transaction.date);
     }
   }, [transaction]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!amount || !person || !category) return;
+    if (!amount || !person || !category || !date) return;
 
-    onSubmit({ ...transaction, amount: parseFloat(amount), person, category });
+    onSubmit({
+      ...transaction,
+      amount: parseFloat(amount),
+      person,
+      category,
+      date,
+    });
     onClose();
   };
 
@@ -52,6 +60,12 @@ export default function EditTransactionModal({
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="Category"
+          />
+          <input
+            type="date"
+            className="w-full p-2 border rounded mb-2"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
           />
           <div className="flex justify-end gap-2">
             <button

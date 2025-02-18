@@ -32,7 +32,7 @@ export default function App() {
   const handleTransaction = (transaction) => {
     const newTransaction = {
       ...transaction,
-      date: new Date().toISOString().split("T")[0],
+      date: transaction.date || new Date().toISOString().split("T")[0], // Use the selected date or default to today
     };
     const updatedTransactions = [...transactions, newTransaction];
     localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
@@ -77,11 +77,13 @@ export default function App() {
     localStorage.setItem("balance", JSON.stringify(amount));
   };
 
-  const filteredTransactions = transactions.filter((txn) => {
-    if (filterType !== "all" && txn.type !== filterType) return false;
-    if (filterDate && txn.date !== filterDate) return false;
-    return true;
-  });
+  const filteredTransactions = transactions
+    .filter((txn) => {
+      if (filterType !== "all" && txn.type !== filterType) return false;
+      if (filterDate && txn.date !== filterDate) return false;
+      return true;
+    })
+    .reverse(); // Reverse the array to show the last transaction first
 
   return (
     <div className="p-4 min-h-screen bg-gray-100">

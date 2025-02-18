@@ -15,14 +15,14 @@ const TransactionModal = ({ isOpen, onClose, onSubmit, type }) => {
       person,
       description,
       type,
-      date,
+      date, // Use the selected date
     };
 
     onSubmit(transaction);
     setAmount("");
     setPerson("");
     setDescription("");
-    setDate(new Date().toISOString().split("T")[0]); // Reset to today
+    setDate(new Date().toISOString().split("T")[0]); // Reset to today after submission
     onClose();
   };
 
@@ -57,7 +57,7 @@ const TransactionModal = ({ isOpen, onClose, onSubmit, type }) => {
           type="date"
           className="w-full p-2 border rounded mb-2"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => setDate(e.target.value)} // Allow user to select a date
         />
         <div className="flex justify-end">
           <button className="mr-2 bg-gray-300 p-2 rounded" onClick={onClose}>
